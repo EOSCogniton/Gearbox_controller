@@ -1,0 +1,15 @@
+"Qty";"Value";"Device";"Package";"Parts";"Description";"MF";"MPN";"OC_FARNELL";"OC_NEWARK";
+"2";"";"PINHD-1X6CB";"1X06-CLEANBIG";"ANALOGIN, POWER";"PIN HEADER";"";"";"";"";
+"2";"";"PINHD-1X8CLEANBIG";"1X08-CLEANBIG";"DIGITALIN0_7, DIGITALIN8_13";"PIN HEADER";"";"";"";"";
+"2";"0.33u";"CPOL-EUE2,5-6E";"E2,5-6E";"C4, C5";"POLARIZED CAPACITOR, European symbol";"";"";"";"";
+"1";"0.5";"R-EU_0309/12";"0309/12";"R20";"RESISTOR, European symbol";"";"";"";"";
+"14";"10k";"R-EU_0204/7";"0204/7";"R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R12, R14, R15, R17";"RESISTOR, European symbol";"";"";"";"";
+"2";"14k";"R-EU_0204/7";"0204/7";"R11, R13";"RESISTOR, European symbol";"";"";"";"";
+"1";"1A";"SH25";"SH25";"F1";"FUSE HOLDER grid 25 mm, OGN0031 8211, Schurter (Buerklin)";"SCHURTER";"0031.8211";"1162741";"96B9380";
+"1";"1mF";"CPOL-EUE7.5-16";"E7,5-16";"C1";"POLARIZED CAPACITOR, European symbol";"";"";"";"";
+"3";"22-05-7028-02";"22-05-7028-02";"7395-02";"ALIM_ARDUINO, CONN_ECU_(DTA), J5";"CONNECTOR";"";"";"";"";
+"1";"22-05-7038-03";"22-05-7038-03";"7395-03";"CONN_PALETTE";"CONNECTOR";"";"";"";"";
+"1";"22-05-7078-07";"22-05-7078-07";"7395-07";"CONN_MOTOR";"CONNECTOR";"";"";"";"";
+"1";"22nF";"C-EU025-025X050";"C025-025X050";"C2";"CAPACITOR, European symbol";"";"";"";"";
+"5";"2N7000";"2N7000_TO92";"TO-92";"Q1, Q2, Q3, Q4, Q5";"2N7000, 2N7002, NDS7002A";"";"";"";"";
+"1";"ZENER 12V";"ZENER-DIODEDO41Z10";"DO41Z10";"D1";"Z-Diode";"";"";"";"";
