@@ -1,0 +1,107 @@
+[Drive Constants]
+feedback = 1
+device1 = PI-Motor
+motor_imax = 20000
+device3 = x15 12V
+feedback_resolution = 1024
+motor_icont = 5100
+device2 = BG 45 PI
+
+[Device 1 Drive Parameters]
+par04 = SVEL_Ki - PI-Velocity Controller - integral gain*?**?*7*?*True*?*1000*?*0*?*[0x3511,0x0,100]*?*
+par05 = CURR_Kp - PI-Current Controller - proportional gain*?**?*8*?*True*?*500*?*5*?*[0x3210,0x0,100]*?*
+par06 = CURR_Ki - PI-Current Controller - integral gain*?**?*9*?*True*?*500*?*5*?*[0x3211,0x0,100]*?*
+par01 = VEL_Kp - PID-Position Controller - proportional gain*?**?*1*?*True*?*1000*?*0*?*[0x3310,0x0,100]*?*
+par02 = VEL_Kp_Stop - percentage of VEL_KP while stopped *?**?*2*?*True*?*200*?*0*?*[0x3310,0x1,60]*?*
+par03 = SVEL_Kp - PI-Velocity Controller - proportional gain*?**?*6*?*True*?*1000*?*50*?*[0x3510,0x0,200]*?*
+
+[File]
+state_reg = [20864, 1]
+
+[Device 1 Motion Parameters]
+decq = Quickstop Decel - fall time in ms related to 1000rpm*?**?*505*?*True*?*60000*?*1*?*20*?*
+acc14 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*314*?*True*?*4294967295*?*1*?*200*?*
+acc11 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*311*?*True*?*4294967295*?*1*?*200*?*
+acc10 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*310*?*True*?*4294967295*?*1*?*200*?*
+acc13 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*313*?*True*?*4294967295*?*1*?*200*?*
+acc12 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*312*?*True*?*4294967295*?*1*?*200*?*
+fu_gearbox_ratio = Gearbox ratio*?**?*801*?*True*?*65535*?*0*?*1.0*?*
+vel07 = Velocity [rpm]*?**?*207*?*True*?*32000*?*-32000*?*3000*?*
+brake_management = 0=No brake management (default), 1=Control through power enable, 2=Control through a movement*?**?*700*?*True*?*2*?*0*?*0*?*
+enc_res = Resolution of the encoder*?**?*551*?*True*?*65536*?*0*?*1024*?*
+settings_id = Settings ID: YYYYMMDDHH*?**?*2*?*True*?*2147483647*?*0*?*2018030614*?*
+pos08 = Position 08 [counts]*?**?*108*?*True*?*2147483647*?*-2147483648*?*17*?*
+acc08 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*308*?*True*?*4294967295*?*1*?*200*?*
+acc09 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*309*?*True*?*4294967295*?*1*?*200*?*
+pos03 = Position 03 [counts]*?**?*103*?*True*?*2147483647*?*-2147483648*?*3716*?*
+acc07 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*307*?*True*?*4294967295*?*1*?*10*?*
+pos01 = Position 01 [counts]*?**?*101*?*True*?*2147483647*?*-2147483648*?*2058*?*
+acc05 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*305*?*True*?*4294967295*?*1*?*10*?*
+pos07 = Position 07 [counts]*?**?*107*?*True*?*2147483647*?*-2147483648*?*16980*?*
+acc03 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*303*?*True*?*4294967295*?*1*?*10*?*
+pos05 = Position 05 [counts]*?**?*105*?*True*?*2147483647*?*-2147483648*?*10348*?*
+pos04 = Position 04 [counts]*?**?*104*?*True*?*2147483647*?*-2147483648*?*7032*?*
+read_input_delay = Time delay to read Inputs Byte (ms)*?**?*5*?*True*?*100000*?*0*?*5*?*
+move_mode = Move mode: 0=Absolute, 1=Relative*?**?*4*?*True*?*1*?*0*?*0*?*
+pos14 = Position 14 [counts]*?**?*114*?*True*?*2147483647*?*-2147483648*?*29*?*
+pos10 = Position 10 [counts]*?**?*110*?*True*?*2147483647*?*-2147483648*?*21*?*
+pos11 = Position 11 [counts]*?**?*111*?*True*?*2147483647*?*-2147483648*?*23*?*
+pos12 = Position 12 [counts]*?**?*112*?*True*?*2147483647*?*-2147483648*?*25*?*
+homeacc = Homing Acceleration / Deceleration [rpm/min]*?**?*605*?*True*?*600000*?*0*?*240000*?*
+pos09 = Position 09 [counts]*?**?*109*?*True*?*2147483647*?*-2147483648*?*19*?*
+homing_curr = Homing Current for hardstop [mA]*?**?*606*?*True*?*50000*?*100*?*2000*?*
+homemethod = 0=Homing Ref. switch Negative directionn, 1=Homing Ref. switch Positive direction, 2=Hard Stop, 3=Homing Limit switch Negative direction, 4=Homing Limit switch Positive direction, 5=Actual position as homed position ( Pos-zero), 6=Actual position as homed position ( Pos-actual)  *?**?*601*?*True*?*99*?*0*?*2*?*
+acc06 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*306*?*True*?*4294967295*?*1*?*10*?*
+enable_after_move = 0=Move & Power Disable, 1=Move & Power Enable*?**?*6*?*True*?*1*?*0*?*1*?*
+pos02 = Position 02 [counts]*?**?*102*?*True*?*2147483647*?*-2147483648*?*400*?*
+acc04 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*304*?*True*?*4294967295*?*1*?*10*?*
+acc02 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*302*?*True*?*4294967295*?*1*?*10*?*
+pos06 = Position 06 [counts]*?**?*106*?*True*?*2147483647*?*-2147483648*?*13664*?*
+homevelzero = Homing Velocity for leaving switch [rpm]*?**?*604*?*True*?*32000*?*1*?*30*?*
+acc01 = Velocity acceleration (delta T) - rise time in ms relatet to 1000rpm*?**?*301*?*True*?*4294967295*?*1*?*10*?*
+brake_on_delay_2 = Brake Management - Delay2 Deactivating [ms]*?**?*705*?*True*?*65535*?*0*?*250*?*
+brake_on_delay_1 = Brake Management - Delay1 Deactivating [ms]*?**?*704*?*True*?*65535*?*0*?*200*?*
+fu_shaft_diameter = Shaft diameter*?**?*802*?*True*?*65535*?*0*?*1.0*?*
+fu_shaft_unit = Shaft diameter unit*?**?*803*?*True*?*3*?*0*?*0*?*
+dec09 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*409*?*True*?*4294967295*?*1*?*200*?*
+dec08 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*408*?*True*?*4294967295*?*1*?*200*?*
+vel13 = Velocity [rpm]*?**?*213*?*True*?*32000*?*-32000*?*500*?*
+dec04 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*404*?*True*?*4294967295*?*1*?*10*?*
+vel11 = Velocity [rpm]*?**?*211*?*True*?*32000*?*-32000*?*500*?*
+vel10 = Velocity [rpm]*?**?*210*?*True*?*32000*?*-32000*?*500*?*
+moving_direction = Direction: 0=CW, 1=CCW*?**?*3*?*True*?*1*?*0*?*0*?*
+dec03 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*403*?*True*?*4294967295*?*1*?*10*?*
+vel14 = Velocity [rpm]*?**?*214*?*True*?*32000*?*-32000*?*500*?*
+qae_base = 0=Hallsensor, 1=Encoder*?**?*560*?*True*?*1*?*0*?*1*?*
+dec05 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*405*?*True*?*4294967295*?*1*?*10*?*
+vel12 = Velocity [rpm]*?**?*212*?*True*?*32000*?*-32000*?*500*?*
+dec07 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*407*?*True*?*4294967295*?*1*?*10*?*
+homeoffset = Homing Offset [counts]*?**?*602*?*True*?*2147483647*?*-2147483648*?*0*?*
+vel04 = Velocity [rpm]*?**?*204*?*True*?*32000*?*-32000*?*3000*?*
+vel05 = Velocity [rpm]*?**?*205*?*True*?*32000*?*-32000*?*3000*?*
+vel06 = Velocity [rpm]*?**?*206*?*True*?*32000*?*-32000*?*3000*?*
+dec06 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*406*?*True*?*4294967295*?*1*?*10*?*
+vel01 = Velocity [rpm]*?**?*201*?*True*?*32000*?*-32000*?*3000*?*
+vel02 = Velocity [rpm]*?**?*202*?*True*?*32000*?*-32000*?*3000*?*
+vel03 = Velocity [rpm]*?**?*203*?*True*?*32000*?*-32000*?*3000*?*
+dec01 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*401*?*True*?*4294967295*?*1*?*10*?*
+vel08 = Velocity [rpm]*?**?*208*?*True*?*32000*?*-32000*?*500*?*
+vel09 = Velocity [rpm]*?**?*209*?*True*?*32000*?*-32000*?*500*?*
+dec14 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*414*?*True*?*4294967295*?*1*?*200*?*
+dec02 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*402*?*True*?*4294967295*?*1*?*10*?*
+dec12 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*412*?*True*?*4294967295*?*1*?*200*?*
+dec13 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*413*?*True*?*4294967295*?*1*?*200*?*
+dec10 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*410*?*True*?*4294967295*?*1*?*200*?*
+dec11 = Velocity deceleration (delta T) - fall time in ms relatet to 1000rpm*?**?*411*?*True*?*4294967295*?*1*?*200*?*
+ip = Peak current [mA]*?**?*501*?*True*?*20000*?*0*?*15000*?*
+id = Continuous current [mA]*?**?*502*?*True*?*50000*?*0*?*6000*?*
+enc = 0=Hallsensor, 1=Encoder feedback, 2=Absolute encoder, 3=Quasi absolute encoder, 4=AE38*?**?*550*?*True*?*4*?*0*?*1*?*
+brake_off_delay_2 = Brake Management - Delay2 Activating [ms]*?**?*703*?*True*?*65535*?*0*?*50*?*
+brake_off_delay_1 = Brake Management - Delay1 Activating [ms]*?**?*702*?*True*?*65535*?*0*?*30*?*
+brake_polarity = 0=Active Low , 1=Active High (default)*?**?*701*?*True*?*1*?*0*?*0*?*
+homingreferenceswitch = 0=Positive Edge, 1=Negative Edge  *?**?*607*?*True*?*1*?*0*?*0*?*
+enable_after_stop = 0=Stop & Power Disable, 1=Stop & Power Enable*?**?*5*?*True*?*1*?*0*?*1*?*
+node_id = Node ID*?**?*1*?*True*?*127*?*0*?*[127]*?*
+pos13 = Position 13 [counts]*?**?*113*?*True*?*2147483647*?*-2147483648*?*27*?*
+homevel = Homing Velocity [rpm]*?**?*603*?*True*?*32000*?*1*?*500*?*
+
