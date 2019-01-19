@@ -24222,7 +24222,7 @@ GND
 GND
 Vin</text>
 <text x="-15.24" y="-10.16" size="3.81" layer="94">Gearbox Controller
-v1.0</text>
+v2.0-dev</text>
 <text x="33.02" y="0" size="2.54" layer="94">EPSA 2019</text>
 <text x="33.02" y="-5.08" size="2.54" layer="94">OPTIMUS v1.0</text>
 <text x="33.02" y="-10.16" size="2.54" layer="94">Bob AUBOUIN (BAT)</text>
