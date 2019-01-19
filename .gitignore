@@ -1,0 +1,14 @@
+# Ignore hidden files 
+.*
+**/.*
+
+# Don't ignore git special files
+!.gitignore
+!.gitattributes
+!.gitkeep
+!**/.gitignore
+!**/.gitattributes
+!**/.gitkeep
+
+# Ignore Eagle backup files
+**/*.*#*
