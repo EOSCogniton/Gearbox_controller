@@ -40,7 +40,7 @@
           VCC                                                            
           RESET     Reset                                                 
                                                                          
-      DISPONIBLE
+      USED
       18  motorSTATE0  Motor State 1 (Error,Stop,Moving)         Digital INPUT
       19  motorSTATE1  Motor State 2 (Error,Stop,Moving)         Digital INPUT
                                                                              
@@ -51,9 +51,16 @@
        4  motorInput4  Motor Input 4                            Digital OUTPUT
        7  shiftCut     Cut the injection                        Digital OUTPUT
        6  shiftPot     Inform Gear (Digital PWM)                 Analog OUTPUT
+       8  neutre       Set the motor to neutre                   Digital INPUT
       13  paletteIncrease Pallete for increasing the speed       Digital INPUT
       12  paletteDencrease Pallete for increasing the speed      Digital INPUT
-                                                                              */
+      10  chipSelect    chip select for can                      Digital INPUT                                                                     
+      17  intPinCan      linked to the can                       Digital INPUT
+      
+      TODO
+      Speak we Arthur about intPinCan
+      */
+      
 const int motorState1 = 18; //A4
 const int motorState2 = 19; //A5
 const int motorInput0 = 0;
@@ -65,6 +72,9 @@ const int shiftCut = 7;
 const int shiftPot = 6; //(Digital PWM - Analog OUTPUT)
 const int paletteIncrease = 13;
 const int paletteDecrease = 12;
+const int neutre = 8; //A définir 
+const int chipSelect = 10;
+const int intPinCAN = 17;
 
 #endif  /* inclusion guards - INC_PROJECTCONFIG_H */ 
 

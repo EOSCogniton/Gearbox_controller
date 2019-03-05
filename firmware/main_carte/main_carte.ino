@@ -9,6 +9,8 @@
 
  
     @section  HISTORY
+    v0.5 - 13/02/2019 Modification link to the class CAN
+    v0.4 - 06/02/2019 Add fonction to can_interface
     v0.3 - 10/11/2018 Comments of code and add of the file 
            "projectconfig.h", with the definitions of the pins numbers.
     v0.2 - 17/10/2018 Management of pallets and beginning of creations of 
@@ -25,21 +27,20 @@
 //Ajout des fonctions
 #include "fonct_palette_homing.h"
 #include "fonct_mot.h"
+#include "can_interface.h"
 
 //initialisation Canbus
 #include <SPI.h>
-#include "mcp_can.h"
-MCP_CAN CAN(53);
 
-const int neutre; 
-
+//Definition of key-word
+#define ERREUR -1 //Use to transmit that the motor is in error
 
 //Definition of used variables 
 boolean statePaletteIncrease; 
 boolean statePaletteIncreaseBefore;
 boolean statePaletteDecrease;
 boolean statePaletteDecreaseBefore;
-int PositionEngager; // Contain what motor position is currently engaged
+int positionEngager; // Contain what motor position is currently engaged
 int wantedPosition;// Contain the motor position wanted so the speed rapport of the bike
 boolean stateHoming; // Will contain the state of the homing button
 boolean stateHomingBefore;
@@ -51,27 +52,16 @@ boolean error;
 const int neutrePosition = 2;
 const int homingPosition=1;
 boolean positionReached=true;
+unsigned long T_D_Millis; //Containt the passed time
 
 //Table which will contain the combination of the motor input for each speed
 boolean motorPosition[16][4];//We use only 4 input motor to command it. The 5 is always 0
 
+//Initialization of CANBUS
+can_interface CAN;
+
 void setup() 
 { 
-  //Initialization of CANBUS
-  START_INIT:
-    if(CAN_OK == CAN.begin(CAN_1000KBPS))  
-    {
-      Serial.println("CAN BUS Shield init ok!");
-    }
-    else if(millis() <= 2000)//Exit the initialisation after 2s in case of failure
-                             //sortir de l'initialisation au bout de 2s en cas de panne
-    {
-      Serial.println("CAN BUS Shield init fail");
-      Serial.println("Init CAN BUS Shield again");
-      delay(100);
-      goto START_INIT;
-    }
-
   //Initialization of the pins
   pinMode(motorState1, INPUT);
   pinMode(motorState2, INPUT);
@@ -97,10 +87,11 @@ void setup()
   //Initialization of the variables
   statePaletteIncreaseBefore = HIGH; //The pallets mode is INPUT_PULLUP, so the pin level is HIGH when it is inactive
   statePaletteDecreaseBefore = HIGH;
-  PositionEngager = 2;
+  positionEngager = 2;
   wantedPosition = 2;
   error = false;
   stateNeutreBefore=HIGH;
+  T_D_Millis=millis();
   
   {//Initialization of the table. We use only the position 1-6, clear error and start Homing
     
@@ -205,6 +196,8 @@ void setup()
 
 void loop() 
 { 
+  CAN.Recieve();//MAJ of the can attributs by recieving the last datas
+  
   //Control of pallet+
   statePaletteIncrease = digitalRead(paletteIncrease);
   //If we only test if the state of the palette have changed or if we only test if the state is now 1, the test is going to be true 2 times:
@@ -215,10 +208,10 @@ void loop()
   {
     if (!statePaletteIncrease) // Check if state changed to 1, so we have the rising edge 0 -> 1 
     {
-      if(PassageVitesseIsPossible(PositionEngager)) 
+      if(PassageVitesseIsPossible(positionEngager)) 
       {
         digitalWrite(shiftCut, LOW); //Stop injection
-        wantedPosition = PositionEngager+1;
+        wantedPosition = positionEngager+1;
       }
     }
     statePaletteIncreaseBefore = statePaletteIncrease;
@@ -234,10 +227,10 @@ void loop()
   {
     if (!statePaletteDecrease) // Check if state changed to 1, so we have the rising edge 0 -> 1
     {
-      if(PassageVitesseIsPossible(PositionEngager))
+      if(PassageVitesseIsPossible(positionEngager))
       {
         digitalWrite(shiftCut, LOW); //Stop injection 
-        wantedPosition = PositionEngager-1;
+        wantedPosition = positionEngager-1;
       }
     }
     statePaletteIncreaseBefore = statePaletteIncrease;
@@ -256,7 +249,7 @@ void loop()
   }
   
   //Gestion bouton homing
-  //stateHoming=;
+  stateHoming=CAN.getHomingState(); //We have the state of the homing thank to the can attribut
   if(stateHoming != stateHomingBefore)
   {
     if(!stateHoming)
@@ -265,34 +258,41 @@ void loop()
     }
     stateHomingBefore = !stateHomingBefore;
   }
-  
-  do //Loop to put the correct position 
+
+  if (wantedPosition!=positionEngager) //We try to change speed only if the pilot demands it
   {
+    digitalWrite(shiftCut, LOW);//Close the injection
     EngageVitesse(wantedPosition);
-    positionReached=true;
     outMotor1 = digitalRead(motorState1);
     outMotor2 = digitalRead(motorState2);
-    while(not(PositionReachedOrHomingDone(outMotor1,outMotor2))) //while the motor doesn't reach its position
+    while(MotorIsTurning(outMotor1,outMotor2)) //while the motor is turning
     {
       outMotor1 = digitalRead(motorState1);
       outMotor2 = digitalRead(motorState2);
+      positionReached=true; //We guess that we will reach the correct position
       if (MotorIsLost(outMotor1,outMotor2)) //error
       {
-        //On nettoie l'erreur
-        digitalWrite(motorInput0,LOW);
-        digitalWrite(motorInput1,LOW);
-        digitalWrite(motorInput2,LOW);
-        digitalWrite(motorInput3,LOW);
-        digitalWrite(motorInput4,LOW);
-    
-        EngageVitesse(homingPosition); // Homing position for the motor
+        //We clean the error
+        EngageVitesse(0); //the motor stop
+        //We transmit the error to the CAN
+        while(!CAN.Transmit(ERREUR, T_D_Millis)) 
+        {
+          //We try to transmit the error until the transmission is good
+        }
+        T_D_Millis=millis(); // We save the time of last transmit
         positionReached=false;
       }
-      outMotor1 = digitalRead(motorState1);
-      outMotor2 = digitalRead(motorState2);
     }
-  }while(not(positionReached));
-  digitalWrite(shiftCut, HIGH);//Open the injection
+    if (positionReached) //We change the current speed only if we have reached the position
+    {
+      positionEngager=wantedPosition; //We save the engaged position
+    }
+    digitalWrite(shiftCut, HIGH);//Open the injection
+    if (CAN.Transmit(positionEngager-2, T_D_Millis)); //We sent the engaged speed to the CAN (Speed= PositionEngager-2)
+    {
+      T_D_Millis=millis(); // We save the time of last transmit
+    }
+  }
 }
 
 void EngageVitesse(int wantedPosition) //Function which pass the speed
