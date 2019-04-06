@@ -74,7 +74,7 @@ const int paletteIncrease = 13;
 const int paletteDecrease = 12;
 const int neutre = 8; //A définir 
 const int chipSelect = 10;
-const int intPinCAN = A5;
+const int intPinCAN = 17;
 
 #endif  /* inclusion guards - INC_PROJECTCONFIG_H */ 
 
