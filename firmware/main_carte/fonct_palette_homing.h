@@ -28,9 +28,7 @@ boolean PassageVitesseIsPossible(int rapportEngager);
                false - otherwise
 */
 /**************************************************************************/
-
-
-   
+ 
 #endif /* inclusion guards - FONCT_PALETTE_HOMING_H */
 
  

@@ -8,12 +8,14 @@
 
  
     @section  HISTORY
+    v0.2 - 06/04/2019 Function TransmetToDTAGear
     v0.1 - 17/10/2018 First release ()
 */
 /**************************************************************************/
 
 
 #include "fonct_palette_homing.h" //Header contenant les prototypes
+#include "projectconfig.h" 
 
 boolean PassageVitesseIsPossible(int rapportEngager)
 {

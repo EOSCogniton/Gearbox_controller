@@ -9,7 +9,8 @@
 
  
     @section  HISTORY
-    v0.5 - 13/02/2019 Modification link to the class CAN
+    v0.6 - 06/04/2019 Add the sending of the speed to the DTA
+    v0.5 - 13/02/2019 Modifications linked to the class CAN
     v0.4 - 06/02/2019 Add fonction to can_interface
     v0.3 - 10/11/2018 Comments of code and add of the file 
            "projectconfig.h", with the definitions of the pins numbers.
@@ -71,7 +72,7 @@ void setup()
   pinMode(motorInput3, OUTPUT);
   pinMode(motorInput4, OUTPUT);
   pinMode(shiftCut, OUTPUT); 
-  pinMode(shiftPot, INPUT);
+  pinMode(gearPot, OUTPUT);
 
   pinMode(paletteIncrease, INPUT_PULLUP);
   pinMode(paletteDecrease, INPUT_PULLUP);
@@ -291,6 +292,7 @@ void loop()
     if (CAN.Transmit(positionEngager-2, T_D_Millis)); //We sent the engaged speed to the CAN (Speed= PositionEngager-2)
     {
       T_D_Millis=millis(); // We save the time of last transmit
+      TransmetToDTATheGear(positionEngager-2); // We send to the DTA the engaged gear
     }
   }
 }
@@ -303,4 +305,13 @@ void EngageVitesse(int wantedPosition) //Function which pass the speed
   digitalWrite(motorInput3, motorPosition[wantedPosition][2]);
   digitalWrite(motorInput4, motorPosition[wantedPosition][3]);
 }
- 
+
+void TransmetToDTATheGear(int rapportEngager)
+{
+  long valAnalog[7];
+  for(int i=0;i<7;i++)
+  {
+    valAnalog[i]=0.2+0.8*i; //mappage des valeurs de tensions envoyés au DTA en fonction de la vitesse (0->0.2V .... 6->5V)
+  }
+  analogWrite(gearPot,valAnalog[rapportEngager]);
+}
