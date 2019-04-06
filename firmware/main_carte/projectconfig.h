@@ -55,7 +55,7 @@
       13  paletteIncrease Pallete for increasing the speed       Digital INPUT
       12  paletteDencrease Pallete for increasing the speed      Digital INPUT
       10  chipSelect    chip select for can                      Digital INPUT                                                                     
-      17  intPinCan      linked to the can                       Digital INPUT
+      9  intPinCan      linked to the can                       Digital INPUT
       
       TODO
       Speak we Arthur about intPinCan
@@ -74,7 +74,7 @@ const int paletteIncrease = 13;
 const int paletteDecrease = 12;
 const int neutre = 8; //A définir 
 const int chipSelect = 10;
-const int intPinCAN = 17;
+const int intPinCAN = 9;
 
 #endif  /* inclusion guards - INC_PROJECTCONFIG_H */ 
 
