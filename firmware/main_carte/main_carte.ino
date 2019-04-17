@@ -9,6 +9,7 @@
 
  
     @section  HISTORY
+    v0.7 - 17/04/2019 Bob Aubouin change a lot of things to associate the code with the real word
     v0.6 - 06/04/2019 Add the sending of the speed to the DTA
     v0.5 - 13/02/2019 Modifications linked to the class CAN
     v0.4 - 06/02/2019 Add fonction to can_interface
@@ -17,10 +18,6 @@
     v0.2 - 17/10/2018 Management of pallets and beginning of creations of 
                       the associated functions
     v0.1 - 10/10/2018 First release (previously code of Pedro)
-
-    example of code version comment
-    v0.2 - Rewrote driver for Adafruit_Sensor and Auto-Gain support, and
-           added lux clipping check (returns 0 lux on sensor saturation)
 */
 /**************************************************************************/
 #include "projectconfig.h"
@@ -47,7 +44,7 @@ boolean stateHoming; // Will contain the state of the homing button
 boolean stateHomingBefore;
 boolean outMotor1; //Info return by the motor
 boolean outMotor2;//Info return by the motor
-boolean stateNeutre;
+boolean neutreState; // Will contain the state of the neutral button
 boolean stateNeutreBefore;
 boolean error;
 const int neutrePosition = 2;
@@ -63,6 +60,7 @@ can_interface CAN;
 
 void setup() 
 { 
+  //Serial.begin(115200);
   //Initialization of the pins
   pinMode(motorState1, INPUT);
   pinMode(motorState2, INPUT);
@@ -74,9 +72,8 @@ void setup()
   pinMode(shiftCut, OUTPUT); 
   pinMode(gearPot, OUTPUT);
 
-  pinMode(paletteIncrease, INPUT_PULLUP);
-  pinMode(paletteDecrease, INPUT_PULLUP);
-  pinMode(neutre, INPUT_PULLUP);
+  pinMode(paletteIncrease, INPUT);
+  pinMode(paletteDecrease, INPUT);
   
   digitalWrite(motorInput0, LOW);
   digitalWrite(motorInput1, LOW);
@@ -86,15 +83,18 @@ void setup()
   digitalWrite(shiftCut, HIGH);
 
   //Initialization of the variables
-  statePaletteIncreaseBefore = HIGH; //The pallets mode is INPUT_PULLUP, so the pin level is HIGH when it is inactive
-  statePaletteDecreaseBefore = HIGH;
-  positionEngager = 2;
-  wantedPosition = 2;
-  error = false;
-  stateNeutreBefore=HIGH;
+  statePaletteIncreaseBefore = LOW; //The pallets mode is INPUT but there is a PULL Down resistor on the shield so the inactive state is low
+  statePaletteDecreaseBefore = LOW;
+  
+  stateNeutreBefore = HIGH; //on this buttons there is an INPUT PULLUP so the inactive state is HIGH
+  stateHomingBefore = HIGH;
+  
+  positionEngager = 0; // We don't know but this normaly not the homming position
+  wantedPosition = 1; // First we want to do the homming of the motor
+  error = false; // we suppose that there is no error 
   T_D_Millis=millis();
   
-  {//Initialization of the table. We use only the position 1-6, clear error and start Homing
+    //Initialization of the table. We use only the position 1-6, clear error and start Homing
     
     //Clear error and Stop
     motorPosition[0][0] = 0;
@@ -191,14 +191,26 @@ void setup()
     motorPosition[15][1] = 1;
     motorPosition[15][2] = 1;
     motorPosition[15][3] = 1;
-  }
+
+  //Homming du motored
+   EngageVitesse(wantedPosition);
+   outMotor1 = digitalRead(motorState1);
+   outMotor2 = digitalRead(motorState2);
+    while (!PositionReachedOrHomingDone(outMotor1,outMotor2))
+    {
+         outMotor1 = digitalRead(motorState1);
+         outMotor2 = digitalRead(motorState2);
+    }
+    positionEngager = wantedPosition; 
+    wantedPosition = 2; //on débute au neutre comme ça pas de surprise
+
+  
 
 }
 
 void loop() 
 { 
   CAN.Recieve();//MAJ of the can attributs by recieving the last datas
-  
   //Control of pallet+
   statePaletteIncrease = digitalRead(paletteIncrease);
   //If we only test if the state of the palette have changed or if we only test if the state is now 1, the test is going to be true 2 times:
@@ -207,59 +219,56 @@ void loop()
   //0 -> 1 = Detect the rising edge of signal statePaletteIncrease;
   if (statePaletteIncrease != statePaletteIncreaseBefore)// Check if state have changed
   {
-    if (!statePaletteIncrease) // Check if state changed to 1, so we have the rising edge 0 -> 1 
+  
+    if (statePaletteIncrease) // Check if state changed to 1, so we have the rising edge 0 -> 1 
     {
-      if(PassageVitesseIsPossible(positionEngager)) 
+      if(PassageVitesseIsPossible(positionEngager+1)) 
       {
-        digitalWrite(shiftCut, LOW); //Stop injection
         wantedPosition = positionEngager+1;
+        Serial.println("On monte");
       }
     }
     statePaletteIncreaseBefore = statePaletteIncrease;
   }
-  
-  //Control of pallet-
+  //Control of pallet -
   statePaletteDecrease = digitalRead(paletteDecrease);
   //If we only test if the state of the palette have changed or if we only test if the state is now 1, the test is going to be true 2 times:
   // when the pilot presses the palette and when it is released. We want to change the speed only  one time for each press
-  
   //0 -> 1 = Detect the rising edge of signal statePaletteDecrease;
   if (statePaletteDecrease != statePaletteDecreaseBefore)// Check if state have changed
   {
-    if (!statePaletteDecrease) // Check if state changed to 1, so we have the rising edge 0 -> 1
+    if (statePaletteDecrease) // Check if state changed to 1, so we have the rising edge 0 -> 1
     {
-      if(PassageVitesseIsPossible(positionEngager))
+      if(PassageVitesseIsPossible(positionEngager-1)) //on vérifie que la vitesse à laquelle on veut passer est atteignable
       {
-        digitalWrite(shiftCut, LOW); //Stop injection 
         wantedPosition = positionEngager-1;
+        Serial.println("On descend");
       }
     }
     statePaletteIncreaseBefore = statePaletteIncrease;
   }
-
   //Gestion du neutre
-  stateNeutre = digitalRead(neutre);
-  if(stateNeutre != stateNeutreBefore)
+
+  neutreState=CAN.getNeutreState();
+  if(neutreState != stateNeutreBefore) //if state change
   {
-    if(!stateNeutre)
+    if(!neutreState) //if state is 0 (there is a pullup resistor on this button)
     {
-      digitalWrite(shiftCut, LOW); 
       wantedPosition = neutrePosition;
     }
-    stateNeutreBefore = !stateNeutre;
+    stateNeutreBefore = neutreState;
   }
   
   //Gestion bouton homing
   stateHoming=CAN.getHomingState(); //We have the state of the homing thank to the can attribut
   if(stateHoming != stateHomingBefore)
   {
-    if(!stateHoming)
+    if(!stateHoming) //if state is 0 (there is a pullup resistor on this button)
     {
       wantedPosition=homingPosition;
     }
-    stateHomingBefore = !stateHomingBefore;
+    stateHomingBefore = stateHoming;
   }
-
   if (wantedPosition!=positionEngager) //We try to change speed only if the pilot demands it
   {
     digitalWrite(shiftCut, LOW);//Close the injection
@@ -273,12 +282,10 @@ void loop()
       positionReached=true; //We guess that we will reach the correct position
       if (MotorIsLost(outMotor1,outMotor2)) //error
       {
-        //We clean the error
-        EngageVitesse(0); //the motor stop
         //We transmit the error to the CAN
-        while(!CAN.Transmit(ERREUR, T_D_Millis)) 
+        while(!CAN.Transmit(0, ERREUR, T_D_Millis)) 
         {
-          //We try to transmit the error until the transmission is good
+          //We try to transmit the error until the transmission is good 
         }
         T_D_Millis=millis(); // We save the time of last transmit
         positionReached=false;
@@ -289,12 +296,13 @@ void loop()
       positionEngager=wantedPosition; //We save the engaged position
     }
     digitalWrite(shiftCut, HIGH);//Open the injection
-    if (CAN.Transmit(positionEngager-2, T_D_Millis)); //We sent the engaged speed to the CAN (Speed= PositionEngager-2)
+    if (CAN.Transmit(positionEngager-2, 0, T_D_Millis)); //We sent the engaged speed to the CAN (Speed= PositionEngager-2)
     {
       T_D_Millis=millis(); // We save the time of last transmit
-      TransmetToDTATheGear(positionEngager-2); // We send to the DTA the engaged gear
-    }
+      }
+    TransmetToDTATheGear(positionEngager-2); // We send to the DTA the engaged gear
   }
+  //Serial.println(positionEngager);
 }
 
 void EngageVitesse(int wantedPosition) //Function which pass the speed
@@ -306,12 +314,12 @@ void EngageVitesse(int wantedPosition) //Function which pass the speed
   digitalWrite(motorInput4, motorPosition[wantedPosition][3]);
 }
 
-void TransmetToDTATheGear(int rapportEngager)
+void TransmetToDTATheGear(int rapportEngage)
 {
   long valAnalog[7];
   for(int i=0;i<7;i++)
   {
     valAnalog[i]=0.2+0.8*i; //mappage des valeurs de tensions envoyés au DTA en fonction de la vitesse (0->0.2V .... 6->5V)
   }
-  analogWrite(gearPot,valAnalog[rapportEngager]);
+  analogWrite(gearPot,valAnalog[rapportEngage]);
 }

@@ -19,6 +19,7 @@
 MCP_CAN CAN0(chipSelect); 
 
 
+
 /**************************************************************************/
 /*!
     @brief   Initialize MCP2515 running at 16MHz with a baudrate of 
@@ -31,7 +32,6 @@ MCP_CAN CAN0(chipSelect);
 can_interface::can_interface()
 {   
     Len = 0;
-    Serial.begin(115200);
   
     // Initialize MCP2515 running at 16MHz with a baudrate of 1000kb/s and the masks and filters disabled
     if(CAN0.begin(MCP_ANY, CAN_1000KBPS, MCP_16MHZ) == CAN_OK){
@@ -48,10 +48,8 @@ can_interface::can_interface()
     pinMode(CAN0_INT, INPUT);   
 
    // Initialisation of each attribut
-   resetState=false;
-   homingState=false;
-   neutreState=false;
-
+   homingState = true;
+   neutreState = true;
 }
 
 /**************************************************************************/
@@ -59,11 +57,6 @@ can_interface::can_interface()
     @brief   Accesseur: Send the state of each attribut
 */
 /**************************************************************************/
-
-boolean can_interface::getResetState()
-{
-  return resetState;
-}
 
 boolean can_interface::getHomingState()
 {
@@ -102,38 +95,26 @@ void can_interface::Recieve()
 /**************************************************************************/
 void can_interface::Data_MAJ()
 {   //Serial.print("\n");
-    if(R_ID==0x1000){ // Reset Motored
-        if (Data[0]==0){
-            // Le bouton est appuyé
-            resetState = true;
-            //Serial.print("0");
-        }
+    if(R_ID==0x1000){ // Homing
         if (Data[0]==17){
-            // le bouton n'est pas appuyé
-            resetState = false;
-            //Serial.print("1");
-        }
-    }
-    if(R_ID==0x1001){ // Homing
-        if (Data[0]==0){
-            // Le bouton est appuyé
+            // Le bouton n'est pas appuyé
             homingState = true;
             //Serial.print("0");       
         }
-        if (Data[0]==17){
-            // le bouton n'est pas appuyé
+        if (Data[0]==0){
+            // le bouton est appuyé
             homingState = false;
             //Serial.print("1");
         }
     }
-    if(R_ID==0x1002){ // Neutre
-        if (Data[0]==0){
-            // Le bouton est appuyé
+    if(R_ID==0x1001){ // Neutre
+        if (Data[0]==17){
+            // Le bouton n'est pas appuyé
             neutreState = true;
             //Serial.print("0");
         }
-        if (Data[0]==17){
-            // le bouton n'est pas appuyé
+        if (Data[0]==0){
+            // le bouton est appuyé
             neutreState = false;
             //Serial.print("1");
         }
@@ -147,11 +128,11 @@ void can_interface::Data_MAJ()
 */
 /**************************************************************************/
 
-boolean can_interface::Transmit(int data, unsigned long T_D_millis)
+boolean can_interface::Transmit(int gear, int error, unsigned long T_D_millis)
 {
     int T_Time=200;
     // Def des messages
-    byte Data_msg[8]={data, data, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    byte Data_msg[8]={gear, error, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     
     unsigned long tmillis=millis();
     if(tmillis>(T_D_millis+T_Time)){ // Envoie discret de période T_Time

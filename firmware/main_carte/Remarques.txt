@@ -1,0 +1,15 @@
+Pourquoi connecté un fil est connecté à l'arduino alors qu'il est toujours à la masse ? (IN0)
+
+Ne jamais utiliser les pin digital 1 et 0 ils ne marche pas si il y a une comuunication série..
+
+Les entrées venant des palettes ont des pull down physiques sur le shield que vous avez fait il ne faut donc pas mettre
+de pull up dans le code
+
+La fonction PassageVitesseIsPossible nous empêche de changer de vitesse lorsqu'on est au neutre or
+ le programme initialise la vitesse au neutre, ca commence mal..
+
+Le pin 2 (et pas le 9) est utilisé par le can..
+
+
+Au démarrage il faut que le moteur fasse son homing il faut donc atteindre la position 1 (j'ai rajouté la mise au neutre dans l'initialisation)
+

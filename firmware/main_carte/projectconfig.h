@@ -46,35 +46,32 @@
                                                                              
        0  motorInput0  Motor Input 0                            Digital OUTPUT
        1  motorInput1  Motor Input 1                            Digital OUTPUT
-       2  motorInput2  Motor Input 2                            Digital OUTPUT
+       2  motorInput2  Motor Input A4                           Digital OUTPUT
        3  motorInput3  Motor Input 3                            Digital OUTPUT
        4  motorInput4  Motor Input 4                            Digital OUTPUT
        7  shiftCut     Cut the injection                        Digital OUTPUT
-       A3  gearPot     Inform DTA of the engaged gear            Analog OUTPUT
-       8  neutre       Set the motor to neutre                   Digital INPUT
-      13  paletteIncrease Pallete for increasing the speed       Digital INPUT
-      12  paletteDencrease Pallete for increasing the speed      Digital INPUT
-      10  chipSelect    chip select for can                      Digital INPUT                                                                     
-      9  intPinCan      linked to the can                       Digital INPUT
+       A3  gearPot     Inform DTA of the engaged gear           Analog OUTPUT
+      8  paletteIncrease Pallete for increasing the speed       Digital INPUT
+      12  paletteDencrease Pallete for increasing the speed     Digital INPUT
+      10  chipSelect    chip select for can                     Digital INPUT                                                                     
+      2  intPinCan      linked to the can                       Digital INPUT
       
       TODO
       Speak we Arthur about intPinCan
       */
-      
 const int motorState1 = A1; 
 const int motorState2 = A0; 
 const int motorInput0 = 0;
 const int motorInput1 = 1;
-const int motorInput2 = 2;
+const int motorInput2 = A4;
 const int motorInput3 = 3;
 const int motorInput4 = 4;
 const int shiftCut = 7; 
 const int gearPot = A3;
-const int paletteIncrease = 13;
-const int paletteDecrease = 12;
-const int neutre = 8; //A définir 
+const int paletteIncrease = 8;
+const int paletteDecrease = 9;
 const int chipSelect = 10;
-const int intPinCAN = 9;
+const int intPinCAN = 2;
 
 #endif  /* inclusion guards - INC_PROJECTCONFIG_H */ 
 
