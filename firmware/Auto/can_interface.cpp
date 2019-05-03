@@ -69,6 +69,11 @@ boolean can_interface::getNeutreState()
   return neutreState;
 }
 
+int can_interface::getRPM()
+{
+  return RPM;
+}
+
 void can_interface::Recieve()
 {
     //Serial.print("\n");
@@ -120,6 +125,9 @@ void can_interface::Data_MAJ()
             //Serial.print("1");
         }
     }
+    if(R_ID==0x2000){ //RPM
+        RPM=Data[0]+256*Data[1];
+    }
 }
 
 /**************************************************************************/
@@ -132,10 +140,9 @@ void can_interface::Data_MAJ()
 unsigned long T_D_millis=millis();
 unsigned long T_Time=100;
 
-void can_interface::Transmit(int gear, int error)
-{
-    byte Data_msg[8]={gear, error, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    
+void can_interface::Transmit(int gear, int error, boolean Auto)
+{  
+    byte Data_msg[8]={gear, error, Auto, 0x00, 0x00, 0x00, 0x00, 0x00};
     tmillis=millis();
     if(tmillis>(T_D_millis+T_Time)){ // Envoie discret de période T_Time
         T_D_millis=millis();

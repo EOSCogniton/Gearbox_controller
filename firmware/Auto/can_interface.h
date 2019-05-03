@@ -38,6 +38,7 @@ class can_interface
     //MCP_CAN CAN0(10); 
     boolean homingState;
     boolean neutreState;
+    int RPM;
     long unsigned int R_ID_Mask;
     long unsigned int R_ID;
     unsigned char Data[8];
@@ -49,9 +50,10 @@ private:
 public:
     can_interface();
     void Recieve();
-    void Transmit(int gear, int error);
+    void Transmit(int gear, int error, boolean Auto);
     boolean getHomingState();
     boolean getNeutreState();
+    int getRPM();
 };
 
 
