@@ -52,3 +52,12 @@ boolean PositionReachedOrHomingDone(boolean OUT1, boolean OUT2)
   return false;  
 }
 
+
+boolean NeedHoming(boolean OUT1, boolean OUT2)
+{
+  if (OUT1==0 and OUT2==1)
+  {
+    return true;
+  }
+  return false;  
+}

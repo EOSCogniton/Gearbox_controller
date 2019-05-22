@@ -54,6 +54,8 @@ unsigned long T_Descente;
 unsigned long T_Montee;
 int valAnalog[7];
 
+int canStable;
+
 
 
 
@@ -233,16 +235,19 @@ void setup()
          outMotor2 = digitalRead(motorState2);
     }
     positionEngager = wantedPosition; 
-    wantedPosition = 2; //on débute au neutre comme ça pas de surprise
+    //wantedPosition = 2; //on débute au neutre comme ça pas de surprise
    analogWrite(gearPot, 255);
   
-
+  canStable = 0;
 }
 
 void loop() 
 { 
-  CAN.Recieve();//MAJ of the can attributs by recieving the last datas
-  CAN.Transmit(positionEngager-2, 0);
+  //MAJ of attributs by recieving the last datas
+  CAN.Recieve();
+  outMotor1 = digitalRead(motorState1);
+  outMotor2 = digitalRead(motorState2);
+
   //Control of pallet+
   statePaletteIncrease = digitalRead(paletteIncrease);
   //If we only test if the state of the palette have changed or if we only test if the state is now 1, the test is going to be true 2 times:
@@ -250,18 +255,32 @@ void loop()
 
   //0 -> 1 = Detect the rising edge of signal statePaletteIncrease;
   if (statePaletteIncrease != statePaletteIncreaseBefore)// Check if state have changed
-  {
-  
+  {  
     if (statePaletteIncrease) // Check if state changed to 1, so we have the rising edge 0 -> 1 
-    {
-      if(PassageVitesseIsPossible(positionEngager+1)) 
+    { 
+      // Si demande de Homming
+      if (NeedHoming(outMotor1,outMotor2))
+      {
+          if (statePaletteIncrease) // Check if state changed to 1, so we have the rising edge 0 -> 1
+          {
+            wantedPosition = 1; //On fait le homming
+          }
+      }
+      else if(PassageVitesseIsPossible(positionEngager+1)) 
       {
         if ((millis() - T_Montee) > 200)
         {
         wantedPosition = positionEngager+1;
         T_Montee = millis();
         }
-      }
+       }
+       else if (positionEngager == 1)
+       {  if ((millis() - T_Montee) > 200)
+          {
+          wantedPosition = positionEngager+2;
+          T_Montee = millis();
+          }
+       }
     }
     statePaletteIncreaseBefore = statePaletteIncrease;
   }
@@ -285,42 +304,52 @@ void loop()
     }
     statePaletteIncreaseBefore = statePaletteIncrease;
   }
-  //Gestion du neutre
+  
 
+  //NEUTRE
   neutreState=CAN.getNeutreState();
-  if(neutreState != stateNeutreBefore) //if state change
+  canStable++;
+  canStable = min(canStable,32500);
+  if(neutreState != stateNeutreBefore and canStable > 32000) //if state change
   {
-    if(neutreState) //if state is 0 (there is a pullup resistor on this button)
+    if(neutreState) //if state is 1 
     {
       wantedPosition = neutrePosition;
     }
     stateNeutreBefore = neutreState;
   }
   
-  //Gestion bouton homing
+  //HOMING
   stateHoming=CAN.getHomingState(); //We have the state of the homing thank to the can attribut
-  if(stateHoming != stateHomingBefore)
+  if(stateHoming != stateHomingBefore and canStable > 32000)
   {
     if(stateHoming) //if state is true 
     {
-      //wantedPosition=homingPosition;
+      wantedPosition=homingPosition;
     }
     stateHomingBefore = stateHoming;
   }
+
+  // MOVE
   if (wantedPosition!=positionEngager) //We try to change speed only if the pilot demands it
   {
     digitalWrite(shiftCut, LOW);//Close the injection
     EngageVitesse(wantedPosition);
     outMotor1 = digitalRead(motorState1);
     outMotor2 = digitalRead(motorState2);
+    
+    char flagQuitWhile = 0;
+    
     while(MotorIsTurning(outMotor1,outMotor2)) //while the motor is turning
-    {
+    { flagQuitWhile++;
       outMotor1 = digitalRead(motorState1);
       outMotor2 = digitalRead(motorState2);
-      if (MotorIsLost(outMotor1,outMotor2)) //error
-      {
-        CAN.Transmit(0, ERREUR);
+      if (flagQuitWhile > 10)
+      {  
+        flagQuitWhile = 0;
+        break;
       }
+      
     }
     if (PositionReachedOrHomingDone(outMotor1,outMotor2)) //We change the current speed only if we have reached the position
     {
@@ -328,6 +357,16 @@ void loop()
     }
     digitalWrite(shiftCut, HIGH);//Open the injection
     TransmetToDTATheGear(positionEngager-2); // We send to the DTA the engaged gear
+  }
+
+  // Transmission des erreurs : le moteur est en erreur, le moteur veut encore tourner ou le moteur veut faire son homming
+  if ((MotorIsLost(outMotor1,outMotor2)) or (MotorIsTurning(outMotor1,outMotor2)) or (NeedHoming(outMotor1,outMotor2)))
+      {
+        CAN.Transmit(positionEngager-2, ERREUR);
+      }
+  else 
+  {
+    CAN.Transmit(positionEngager-2, 0);
   }
 }
 

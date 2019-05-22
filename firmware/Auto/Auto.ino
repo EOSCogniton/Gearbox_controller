@@ -50,17 +50,18 @@ boolean error;
 const int neutrePosition = 2;
 const int homingPosition=1;
 boolean positionReached=true;
-unsigned long T_Descente; //To avoid two gera change on the same push on the palette we use a little delay, this variable will contain the time of the last down shift
-unsigned long T_Montee; // and this one the last up shift
+unsigned long T_Descente;
+unsigned long T_Montee;
 int valAnalog[7];
 
-//Mode Auto
-boolean Auto; // If false we are in normal mode, else we are in mode auto and we shift up at the right RPM
-unsigned long T_Auto; //will contain the time of the state change 0 - 1 when the pilote press the two palette on the same time
-boolean stateTwoPalette;
-boolean stateTwoPaletteBefore;
-int RPM;
-int ShiftRPM[2];
+int canStable;
+
+//Auto
+bool Auto; // if true we are in auto mode
+RPM_shift[3] = {13300,13100,12900};
+push_time = 3000; //time in ms to activate the auto mode
+unsigned long T_Auto; 
+
 
 //Table which will contain the combination of the motor input for each speed
 boolean motorPosition[16][4];//We use only 4 input motor to command it. The 5 is always 0
@@ -120,15 +121,6 @@ void setup()
   error = false; // we suppose that there is no error 
   T_Descente = millis();
   T_Montee = millis();
-  
-  //Auto
-  Auto = false; // we always start the car in normal mode
-  T_Auto = 0; 
-  stateTwoPaletteBefore = 0;
-  RPM = 0;
-  ShiftRPM[1] = 1200; //de 1 vers 2
-  ShiftRPM[2] = 1200; //de 2 vers 3
- 
     //mappage des valeurs de tensions envoyés au DTA en fonction de la vitesse (0->0.2V .... 6->5V)
   valAnalog[0] = 10;
   valAnalog[1] = 51;
@@ -137,7 +129,7 @@ void setup()
   valAnalog[4] = 174;
   valAnalog[5] = 215;
   valAnalog[6] = 255;
-  
+
     //Initialization of the table. We use only the position 1-6, clear error and start Homing
     
     //Clear error and Stop
@@ -236,6 +228,10 @@ void setup()
     motorPosition[15][2] = 1;
     motorPosition[15][3] = 1;
 
+  //Auto
+  Auto = false; //we start in normal mode
+  T_Auto = millis();
+
   //Homming du motored
    EngageVitesse(wantedPosition);
    outMotor1 = digitalRead(motorState1);
@@ -246,16 +242,19 @@ void setup()
          outMotor2 = digitalRead(motorState2);
     }
     positionEngager = wantedPosition; 
-    wantedPosition = 2; //on débute au neutre comme ça pas de surprise
+    //wantedPosition = 2; //on débute au neutre comme ça pas de surprise
    analogWrite(gearPot, 255);
   
-
+  canStable = 0;
 }
 
 void loop() 
 { 
-  CAN.Recieve();//MAJ of the can attributs by recieving the last datas
-  CAN.Transmit(positionEngager-2, 0,Auto);
+  //MAJ of attributs by recieving the last datas
+  CAN.Recieve();
+  outMotor1 = digitalRead(motorState1);
+  outMotor2 = digitalRead(motorState2);
+
   //Control of pallet+
   statePaletteIncrease = digitalRead(paletteIncrease);
   //If we only test if the state of the palette have changed or if we only test if the state is now 1, the test is going to be true 2 times:
@@ -263,19 +262,33 @@ void loop()
 
   //0 -> 1 = Detect the rising edge of signal statePaletteIncrease;
   if (statePaletteIncrease != statePaletteIncreaseBefore)// Check if state have changed
-  {
-  
+  {  
     if (statePaletteIncrease) // Check if state changed to 1, so we have the rising edge 0 -> 1 
-    {
-      Auto = false; //any action on the pilote will stop the auto mode
-      if(PassageVitesseIsPossible(positionEngager+1)) 
+    { 
+      Auto = false;
+      // Si demande de Homming
+      if (NeedHoming(outMotor1,outMotor2))
+      {
+          if (statePaletteIncrease) // Check if state changed to 1, so we have the rising edge 0 -> 1
+          {
+            wantedPosition = 1; //On fait le homming
+          }
+      }
+      else if(PassageVitesseIsPossible(positionEngager+1)) 
       {
         if ((millis() - T_Montee) > 200)
         {
         wantedPosition = positionEngager+1;
         T_Montee = millis();
         }
-      }
+       }
+       else if (positionEngager == 1)
+       {  if ((millis() - T_Montee) > 200)
+          {
+          wantedPosition = positionEngager+2;
+          T_Montee = millis();
+          }
+       }
     }
     statePaletteIncreaseBefore = statePaletteIncrease;
   }
@@ -288,9 +301,9 @@ void loop()
   {
     if (statePaletteDecrease) // Check if state changed to 1, so we have the rising edge 0 -> 1
     {
-      Auto = false; //any action on the pilote will stop the auto mode
       if(PassageVitesseIsPossible(positionEngager-1)) //on vérifie que la vitesse à laquelle on veut passer est atteignable
       {
+        Auto = false;
         if ((millis() - T_Descente) > 200)
         {
           wantedPosition = positionEngager-1;
@@ -300,44 +313,41 @@ void loop()
     }
     statePaletteIncreaseBefore = statePaletteIncrease;
   }
-  //Gestion du neutre
+  
 
+  //NEUTRE
   neutreState=CAN.getNeutreState();
-  if(neutreState != stateNeutreBefore) //if state change
+  canStable++;
+  canStable = min(canStable,32500);
+  if(neutreState != stateNeutreBefore and canStable > 32000) //if state change
   {
-    if(neutreState) //if state is 1
+    if(neutreState) //if state is 1 
     {
-      Auto = false; //any action on the pilote will stop the auto mode
+      Auto = false;
       wantedPosition = neutrePosition;
     }
     stateNeutreBefore = neutreState;
   }
   
-  //Gestion bouton homing
+  //HOMING
   stateHoming=CAN.getHomingState(); //We have the state of the homing thank to the can attribut
-  if(stateHoming != stateHomingBefore)
+  if(stateHoming != stateHomingBefore and canStable > 32000)
   {
     if(stateHoming) //if state is true 
     {
-      //Auto = false; //any action on the pilote will stop the auto mode
-      //wantedPosition=homingPosition;
+      Auto = false;
+      T_Auto = millis();
+      wantedPosition=homingPosition;
     }
     stateHomingBefore = stateHoming;
   }
 
-  // Passage auto
 
-  //Le mode s'active lorsqu'on appuie pendant 3 seconde sur les deux palettes en même temps
-  stateTwoPalette = (statePaletteIncrease && statePaletteDecrease);
-  if (stateTwoPalette != stateTwoPaletteBefore)
-    {
-      if (stateTwoPalette)
-      {
-        T_Auto = millis();
-      }
-    }
+  //AUTO
 
-   if (stateTwoPalette && (millis() - T_Auto > 3000))
+  //Le mode s'active lorsqu'on appuie pendant 3 seconde sur le bouton homming
+
+   if (stateHoming && (millis() - T_Auto > 3000))
    {
     Auto=true; // activation 
    }
@@ -347,23 +357,27 @@ void loop()
     RPM=CAN.getRPM();
     wantedPosition = CalculAuto(positionEngager,RPM);
    }
-  
 
-  // Si changement :
+  // MOVE
   if (wantedPosition!=positionEngager) //We try to change speed only if the pilot demands it
   {
     digitalWrite(shiftCut, LOW);//Close the injection
     EngageVitesse(wantedPosition);
     outMotor1 = digitalRead(motorState1);
     outMotor2 = digitalRead(motorState2);
+    
+    char flagQuitWhile = 0;
+    
     while(MotorIsTurning(outMotor1,outMotor2)) //while the motor is turning
-    {
+    { flagQuitWhile++;
       outMotor1 = digitalRead(motorState1);
       outMotor2 = digitalRead(motorState2);
-      if (MotorIsLost(outMotor1,outMotor2)) //error
-      {
-        CAN.Transmit(0, ERREUR,Auto);
+      if (flagQuitWhile > 10)
+      {  
+        flagQuitWhile = 0;
+        break;
       }
+      
     }
     if (PositionReachedOrHomingDone(outMotor1,outMotor2)) //We change the current speed only if we have reached the position
     {
@@ -371,6 +385,16 @@ void loop()
     }
     digitalWrite(shiftCut, HIGH);//Open the injection
     TransmetToDTATheGear(positionEngager-2); // We send to the DTA the engaged gear
+  }
+
+  // Transmission des erreurs : le moteur est en erreur, le moteur veut encore tourner ou le moteur veut faire son homming
+  if ((MotorIsLost(outMotor1,outMotor2)) or (MotorIsTurning(outMotor1,outMotor2)) or (NeedHoming(outMotor1,outMotor2)))
+      {
+        CAN.Transmit(positionEngager-2, ERREUR,Auto);
+      }
+  else 
+  {
+    CAN.Transmit(positionEngager-2, 0,Auto);
   }
 }
 
@@ -388,15 +412,20 @@ void TransmetToDTATheGear(int rapportEngage)
   analogWrite(gearPot,valAnalog[rapportEngage]);
 }
 
-int CalculAuto(int pos,int RPM)
-{
-  for (int i=0; i <= 2; i++){
-    if (pos==i)
-    {
-      if (RPM > ShiftRPM[i]){return(i+1);}
-      else {return(i);}
-    }
+int CalculAuto(int pos,int RPM){
+  if (pos<=2) {
+    return(3);
   }
-  if (pos==3){return(3);}
+  else if (pos==3 && RPM>RPM_shift[0]){
+    return(4);
+  }
+  else if (pos==4 && RPM>RPM_shift[1]){
+    return(5);
+  }
+  else if (pos==5 && RPM>RPM_shift[2]){
+    return(6);
+    }
+  else {
+    return(pos);
+    }
 }
-  

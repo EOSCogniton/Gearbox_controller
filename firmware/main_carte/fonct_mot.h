@@ -76,4 +76,5 @@ boolean MotorIsTurning(boolean OUT1, boolean OUT2);
 */
 /**************************************************************************/
 boolean PositionReachedOrHomingDone(boolean OUT1, boolean OUT2);
+boolean NeedHoming(boolean OUT1, boolean OUT2);
 #endif /* inclusion guards - FONCT_MOT_H */
