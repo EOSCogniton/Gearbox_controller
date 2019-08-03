@@ -41,11 +41,9 @@ boolean statePaletteDecreaseBefore;
 int positionEngager; // Contain what motor position is currently engaged
 int wantedPosition;// Contain the motor position wanted so the speed rapport of the bike
 boolean stateHoming; // Will contain the state of the homing button
-boolean stateHomingBefore;
 boolean outMotor1; //Info return by the motor
 boolean outMotor2;//Info return by the motor
 boolean neutreState; // Will contain the state of the neutral button
-boolean stateNeutreBefore;
 boolean error;
 const int neutrePosition = 2;
 const int homingPosition=1;
@@ -58,9 +56,12 @@ int canStable;
 
 //Auto
 bool Auto; // if true we are in auto mode
-RPM_shift[3] = {13300,13100,12900};
-push_time = 3000; //time in ms to activate the auto mode
-unsigned long T_Auto; 
+int RPM_shift[3] = {12500,12200,12000};
+int push_time = 5000; //time in ms to activate the auto mode
+unsigned long T_Auto;
+unsigned long T_ShiftAuto;
+signed RPM ;
+
 
 
 //Table which will contain the combination of the motor input for each speed
@@ -112,9 +113,6 @@ void setup()
   //Initialization of the variables
   statePaletteIncreaseBefore = LOW; //The pallets mode is INPUT but there is a PULL Down resistor on the shield so the inactive state is low
   statePaletteDecreaseBefore = LOW;
-  
-  stateNeutreBefore = false; //on this buttons there is an INPUT PULLUP so the inactive state is HIGH
-  stateHomingBefore = false;
   
   positionEngager = 0; // We don't know but this normaly not the homming position
   wantedPosition = 1; // First we want to do the homming of the motor
@@ -231,6 +229,7 @@ void setup()
   //Auto
   Auto = false; //we start in normal mode
   T_Auto = millis();
+  T_ShiftAuto = millis();
 
   //Homming du motored
    EngageVitesse(wantedPosition);
@@ -278,6 +277,7 @@ void loop()
       {
         if ((millis() - T_Montee) > 200)
         {
+        digitalWrite(shiftCut, LOW);//Close the injection
         wantedPosition = positionEngager+1;
         T_Montee = millis();
         }
@@ -303,13 +303,22 @@ void loop()
     {
       if(PassageVitesseIsPossible(positionEngager-1)) //on vérifie que la vitesse à laquelle on veut passer est atteignable
       {
-        Auto = false;
         if ((millis() - T_Descente) > 200)
         {
+          Auto = false;
           wantedPosition = positionEngager-1;
           T_Descente = millis();
+          T_Auto = millis();
         }
       }
+       else if (positionEngager == 3 and wantedPosition != positionEngager-1){
+        if (Auto==0 and (millis() - T_Auto) >1000){
+          Auto = true;
+        }
+        //else {
+          //Auto = false;
+       // }
+      }  
     }
     statePaletteIncreaseBefore = statePaletteIncrease;
   }
@@ -319,49 +328,50 @@ void loop()
   neutreState=CAN.getNeutreState();
   canStable++;
   canStable = min(canStable,32500);
-  if(neutreState != stateNeutreBefore and canStable > 32000) //if state change
+  if(neutreState and canStable > 32000) //if state is 1 
   {
-    if(neutreState) //if state is 1 
-    {
-      Auto = false;
-      wantedPosition = neutrePosition;
-    }
-    stateNeutreBefore = neutreState;
+    Auto = false;
+    wantedPosition = neutrePosition;
   }
+
   
   //HOMING
   stateHoming=CAN.getHomingState(); //We have the state of the homing thank to the can attribut
-  if(stateHoming != stateHomingBefore and canStable > 32000)
+
+  if(stateHoming and canStable > 32000) //if state is true 
   {
-    if(stateHoming) //if state is true 
-    {
-      Auto = false;
-      T_Auto = millis();
-      wantedPosition=homingPosition;
-    }
-    stateHomingBefore = stateHoming;
+    Auto = false;
+    wantedPosition=homingPosition;
   }
 
 
-  //AUTO
 
-  //Le mode s'active lorsqu'on appuie pendant 3 seconde sur le bouton homming
+//  //AUTO
 
-   if (stateHoming && (millis() - T_Auto > 3000))
-   {
-    Auto=true; // activation 
-   }
+//Le mode s'active lorsqu'on appuie sur doswn shift et que l'on est en première
 
-   if (Auto);
+
+if (Auto==true)
    {
     RPM=CAN.getRPM();
-    wantedPosition = CalculAuto(positionEngager,RPM);
+    if (millis()-T_ShiftAuto>500) {
+      wantedPosition = CalculAuto(positionEngager,RPM);
+    }
+    if (wantedPosition!=positionEngager) {
+      T_ShiftAuto = millis();
+    }
    }
 
   // MOVE
   if (wantedPosition!=positionEngager) //We try to change speed only if the pilot demands it
   {
-    digitalWrite(shiftCut, LOW);//Close the injection
+    if (wantedPosition == positionEngager-1) {
+      delay(20);
+      }
+    else {
+      delay(10);
+    }
+      
     EngageVitesse(wantedPosition);
     outMotor1 = digitalRead(motorState1);
     outMotor2 = digitalRead(motorState2);
